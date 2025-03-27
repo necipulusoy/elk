@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: nfs-provisioner
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - cluster: prod-ds    
+            name: prod
+          - cluster: prod-us 
+            name: prod-local  
+  template:
+    metadata:
+      name: '{{cluster}}-nfs'
+    spec:
+      syncPolicy:
+        automated:
+          selfHeal: true
+          prune: false
+        syncOptions:
+          - Validate=true
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true
+          - ServerSideApply=true
+      destination:
+          namespace: nfs-subdir-external-provisioner
+          name: '{{cluster}}'
+      project: default
+      source:
+        repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+        chart: nfs-subdir-external-provisioner
+        targetRevision: 4.0.18
+        helm:
+          values: |
+            nfs:
+              server: 10.60.6.34
+              path: /Rancher_Test
+              reclaimPolicy: Retain
+            storageClass:
+              allowVolumeExpansion: true
+              archiveOnDelete: true
+              create: true
+              defaultClass: true
+              name: nfs-sc
+              reclaimPolicy: Delete
+              volumeBindingMode: Immediate
+              pathPattern: ${.PVC.namespace}-${.PVC.name}
