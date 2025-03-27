@@ -36,7 +36,7 @@ spec:
         helm:
           values: |
             nfs:
-              server: 10.60.6.34
+              server: 10.X.6.X
               path: /Rancher_Test
               reclaimPolicy: Retain
             storageClass:
